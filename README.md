@@ -31,6 +31,23 @@ curl -X POST http://localhost:8000/calculations \
   -d '{"type": "addition", "inputs": [10.5, 3, 2]}'
 ```
 
+### Screenshots
+
+<!--
+  Drop screenshots into docs/screenshots/ using the filenames below and
+  they'll show up here automatically. One screenshot per BREAD operation,
+  showing it working end-to-end (e.g. the dashboard UI and/or the Swagger
+  UI response) is enough.
+-->
+
+| Operation | Screenshot |
+|---|---|
+| **Browse** | ![Browse calculations](docs/screenshots/bread-browse.png) |
+| **Read** | ![Read a calculation](docs/screenshots/bread-read.png) |
+| **Edit** | ![Edit a calculation](docs/screenshots/bread-edit.png) |
+| **Add** | ![Add a calculation](docs/screenshots/bread-add.png) |
+| **Delete** | ![Delete a calculation](docs/screenshots/bread-delete.png) |
+
 ## Other Endpoints
 
 | Method & Path | Purpose |
@@ -132,6 +149,17 @@ pytest tests/integration/    # a single test tier
 ```
 
 Coverage reports print to the terminal and are written to `htmlcov/` (open `htmlcov/index.html`). The e2e suite spins up a real `uvicorn` server and a headless Chromium browser via Playwright, and needs a reachable PostgreSQL instance at `TEST_DATABASE_URL`.
+
+## CI/CD
+
+[.github/workflows/test.yml](.github/workflows/test.yml) runs the test suite and a Trivy vulnerability scan on every push/PR to `main`, and builds/pushes the Docker image to Docker Hub on `main`.
+
+<!-- Drop screenshots into docs/screenshots/ using the filenames below. -->
+
+| | Screenshot |
+|---|---|
+| **Successful GitHub Actions run** | ![Successful GitHub Actions run](docs/screenshots/github-actions-run.png) |
+| **Docker Hub deployment** | ![Docker Hub deployment](docs/screenshots/dockerhub-deployment.png) |
 
 ## License
 
