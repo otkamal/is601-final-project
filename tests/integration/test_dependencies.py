@@ -69,6 +69,50 @@ def test_get_current_user_invalid_token(mock_verify_token):
 
     mock_verify_token.assert_called_once_with("invalidtoken")
 
+# Test get_current_user with a minimal dict payload containing only 'sub'
+def test_get_current_user_minimal_dict_payload(mock_verify_token):
+    user_id = uuid4()
+    mock_verify_token.return_value = {"sub": user_id}
+
+    user_response = get_current_user(token="validtoken")
+
+    assert isinstance(user_response, UserResponse)
+    assert user_response.id == user_id
+    assert user_response.username == "unknown"
+    assert user_response.email == "unknown@example.com"
+    assert user_response.is_active is True
+    assert user_response.is_verified is False
+
+    mock_verify_token.assert_called_once_with("validtoken")
+
+# Test get_current_user with the token payload being a bare UUID
+def test_get_current_user_uuid_payload(mock_verify_token):
+    user_id = uuid4()
+    mock_verify_token.return_value = user_id
+
+    user_response = get_current_user(token="validtoken")
+
+    assert isinstance(user_response, UserResponse)
+    assert user_response.id == user_id
+    assert user_response.username == "unknown"
+    assert user_response.email == "unknown@example.com"
+    assert user_response.is_active is True
+    assert user_response.is_verified is False
+
+    mock_verify_token.assert_called_once_with("validtoken")
+
+# Test get_current_user with a payload that is neither a dict, UUID, nor None
+def test_get_current_user_unsupported_payload_type(mock_verify_token):
+    mock_verify_token.return_value = "not-a-dict-or-uuid"
+
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user(token="validtoken")
+
+    assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+    assert exc_info.value.detail == "Could not validate credentials"
+
+    mock_verify_token.assert_called_once_with("validtoken")
+
 # Test get_current_user with valid token but incomplete payload (simulate missing fields)
 def test_get_current_user_valid_token_incomplete_payload(mock_verify_token):
     # Return an empty dict simulating missing required fields
