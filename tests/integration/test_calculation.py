@@ -2,6 +2,7 @@ import pytest
 import uuid
 
 from app.models.calculation import (
+    AbstractCalculation,
     Calculation,
     Addition,
     Subtraction,
@@ -135,7 +136,23 @@ def test_invalid_inputs_for_addition():
     with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
         addition.get_result()
 
+def test_invalid_inputs_too_few_for_addition():
+    """
+    Test that providing fewer than two numbers to Addition.get_result raises a ValueError.
+    """
+    addition = Addition(user_id=dummy_user_id(), inputs=[10])
+    with pytest.raises(ValueError, match="Inputs must be a list with at least two numbers."):
+        addition.get_result()
+
 def test_invalid_inputs_for_subtraction():
+    """
+    Test that providing non-list inputs to Subtraction.get_result raises a ValueError.
+    """
+    subtraction = Subtraction(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        subtraction.get_result()
+
+def test_invalid_inputs_too_few_for_subtraction():
     """
     Test that providing fewer than two numbers to Subtraction.get_result raises a ValueError.
     """
@@ -143,10 +160,51 @@ def test_invalid_inputs_for_subtraction():
     with pytest.raises(ValueError, match="Inputs must be a list with at least two numbers."):
         subtraction.get_result()
 
+def test_invalid_inputs_for_multiplication():
+    """
+    Test that providing non-list inputs to Multiplication.get_result raises a ValueError.
+    """
+    multiplication = Multiplication(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        multiplication.get_result()
+
+def test_invalid_inputs_too_few_for_multiplication():
+    """
+    Test that providing fewer than two numbers to Multiplication.get_result raises a ValueError.
+    """
+    multiplication = Multiplication(user_id=dummy_user_id(), inputs=[10])
+    with pytest.raises(ValueError, match="Inputs must be a list with at least two numbers."):
+        multiplication.get_result()
+
 def test_invalid_inputs_for_division():
+    """
+    Test that providing non-list inputs to Division.get_result raises a ValueError.
+    """
+    division = Division(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        division.get_result()
+
+def test_invalid_inputs_too_few_for_division():
     """
     Test that providing fewer than two numbers to Division.get_result raises a ValueError.
     """
     division = Division(user_id=dummy_user_id(), inputs=[10])
     with pytest.raises(ValueError, match="Inputs must be a list with at least two numbers."):
         division.get_result()
+
+def test_abstract_calculation_get_result_not_implemented():
+    """
+    Test that the base Calculation class (which doesn't override get_result)
+    raises NotImplementedError, per AbstractCalculation.get_result's contract.
+    """
+    calc = Calculation(user_id=dummy_user_id(), inputs=[1, 2])
+    with pytest.raises(NotImplementedError):
+        calc.get_result()
+
+def test_calculation_repr():
+    """
+    Test that __repr__ includes the calculation's type and inputs.
+    """
+    addition = Addition(user_id=dummy_user_id(), inputs=[1, 2])
+    assert repr(addition) == f"<Calculation(type=addition, inputs=[1, 2])>"
+
