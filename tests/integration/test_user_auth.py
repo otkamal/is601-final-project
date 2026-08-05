@@ -3,8 +3,10 @@
 import pytest
 from uuid import UUID
 import pydantic_core
+from jose import jwt
 from sqlalchemy.exc import IntegrityError
 from app.models.user import User
+from app.core.config import settings
 
 def test_password_hashing(db_session, fake_user_data):
     """Test password hashing and verification functionality"""
@@ -147,6 +149,18 @@ def test_invalid_token():
     result = User.verify_token(invalid_token)
     assert result is None
 
+def test_token_without_sub_claim():
+    """Test that a validly-signed token missing the 'sub' claim is rejected"""
+    token = jwt.encode({"foo": "bar"}, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM)
+    result = User.verify_token(token)
+    assert result is None
+
+def test_token_with_non_uuid_sub_claim():
+    """Test that a validly-signed token whose 'sub' claim isn't a valid UUID is rejected"""
+    token = jwt.encode({"sub": "not-a-uuid"}, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM)
+    result = User.verify_token(token)
+    assert result is None
+
 def test_token_creation_and_verification(db_session, fake_user_data):
     """Test token creation and verification"""
     fake_user_data['password'] = "TestPass123"
@@ -159,6 +173,20 @@ def test_token_creation_and_verification(db_session, fake_user_data):
     # Verify token
     decoded_user_id = User.verify_token(token)
     assert decoded_user_id == user.id
+
+def test_authenticate_with_wrong_password(db_session, fake_user_data):
+    """Test that authentication fails and returns None with an incorrect password"""
+    fake_user_data['password'] = "TestPass123"
+    User.register(db_session, fake_user_data)
+    db_session.commit()
+
+    auth_result = User.authenticate(db_session, fake_user_data['username'], "WrongPass123")
+    assert auth_result is None
+
+def test_authenticate_nonexistent_user(db_session):
+    """Test that authentication fails and returns None for a user that doesn't exist"""
+    auth_result = User.authenticate(db_session, "no_such_user", "SomePass123")
+    assert auth_result is None
 
 def test_authenticate_with_email(db_session, fake_user_data):
     """Test authentication using email instead of username"""
@@ -175,6 +203,28 @@ def test_authenticate_with_email(db_session, fake_user_data):
     
     assert auth_result is not None
     assert "access_token" in auth_result
+
+def test_init_with_hashed_password_kwarg(fake_user_data):
+    """Test that passing hashed_password= to __init__ stores it as the password field"""
+    user = User(
+        first_name=fake_user_data['first_name'],
+        last_name=fake_user_data['last_name'],
+        email=fake_user_data['email'],
+        username=fake_user_data['username'],
+        hashed_password="already-hashed-value"
+    )
+    assert user.password == "already-hashed-value"
+    assert user.hashed_password == "already-hashed-value"
+
+def test_update_method(test_user):
+    """Test that update() sets attributes and refreshes updated_at"""
+    original_updated_at = test_user.updated_at
+    result = test_user.update(first_name="Updated", last_name="Name")
+
+    assert result is test_user
+    assert test_user.first_name == "Updated"
+    assert test_user.last_name == "Name"
+    assert test_user.updated_at >= original_updated_at
 
 def test_user_model_representation(test_user):
     """Test the string representation of User model"""
