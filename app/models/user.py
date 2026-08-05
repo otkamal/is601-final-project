@@ -176,7 +176,6 @@ class User(Base):
             ValueError: If password is invalid or username/email already exists
         """
         password = user_data.get("password")
-        print(f"PASSSSSWORD {password}")
         if not password or len(password) < 6:
             raise ValueError("Password must be at least 6 characters long")
         
