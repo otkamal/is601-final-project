@@ -1,27 +1,53 @@
-FROM python:3.14-slim
+# ---- Builder stage: installs Python dependencies, discarded from the final image ----
+FROM python:3.14-slim AS builder
 
-# Set environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system dependencies
+# Build-time system dependencies, for any dependency without a prebuilt
+# wheel for this platform/Python version. Discarded along with this stage.
 RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends gcc python3-dev libssl-dev curl && \
+    apt-get install -y --no-install-recommends gcc python3-dev libssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and essential Python tools
-RUN python -m pip install --upgrade pip setuptools>=70.0.0 wheel
+RUN python -m pip install --upgrade pip "setuptools>=78.1.1" wheel
+
+# Install into an isolated prefix (not this interpreter's own
+# site-packages) so only the app's actual dependencies -- not pip,
+# setuptools, or the compilers above -- get copied into the runtime image.
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+
+# ---- Runtime stage: slim final image, no build tools or pip ----
+FROM python:3.14-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Runtime system dependencies only: curl for the healthcheck, libssl3 for
+# compiled extensions (bcrypt/cryptography) that link against it dynamically.
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends libssl3 curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Drop the base image's own bundled pip/setuptools -- nothing at runtime
+# needs them, and pip vendors third-party libraries (e.g. msgpack) whose
+# CVE fixes lag behind pip releases, so the safest fix is to not ship pip
+# in the runtime image at all rather than chase its vendored versions.
+RUN python -m pip uninstall -y pip setuptools || true
 
 # Create non-root user
 RUN groupadd -r appgroup && \
     useradd -r -g appgroup appuser
 
-# Copy dependencies and install them
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Bring in only the installed dependencies from the builder stage.
+COPY --from=builder /install /usr/local
 
 # Copy application code
 COPY . .
