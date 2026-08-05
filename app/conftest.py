@@ -1,9 +1,11 @@
+import asyncio
+import concurrent.futures
 import os
 import socket
 import subprocess
 import time
 import logging
-from typing import Generator, Dict, List
+from typing import Any, Coroutine, Generator, Dict, List
 from contextlib import contextmanager
 
 import pytest
@@ -47,6 +49,19 @@ def create_fake_user() -> Dict[str, str]:
         "username": fake.unique.user_name(),
         "password": fake.password(length=12)
     }
+
+def run_async(coro: Coroutine[Any, Any, Any]) -> Any:
+    """
+    Run a coroutine to completion in a dedicated thread with its own event loop.
+
+    Needed because the session-scoped browser_context fixture keeps Playwright's
+    sync API's internal event loop alive in the main thread for the whole test
+    session once any e2e/UI test uses it, which breaks a plain asyncio.run()
+    call in tests that run afterward. Running in a fresh thread sidesteps that,
+    since asyncio's "is a loop already running" check is per-thread.
+    """
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        return executor.submit(asyncio.run, coro).result()
 
 @contextmanager
 def managed_db_session():
