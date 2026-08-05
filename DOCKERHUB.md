@@ -14,7 +14,7 @@ docker run -d \
   -e DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/fastapi_db \
   -e JWT_SECRET_KEY=change-me \
   -e JWT_REFRESH_SECRET_KEY=change-me-too \
-  <dockerhub-username>/mod14-assignment:latest
+  otkamal/mod14-assignment:latest
 ```
 
 Then visit `http://localhost:8000` (API docs at `/docs`, health check at `/health`).
