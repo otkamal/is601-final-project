@@ -316,6 +316,40 @@ class Multiplication(Calculation):
             result *= value
         return result
 
+class Exponentiation(Calculation):
+    """
+    Exponentiation calculation subclass.
+
+    Implements sequential exponentiation starting from the first number.
+    Examples:
+        [2, 3] -> 2 ** 3 = 8
+        [2, 3, 2] -> (2 ** 3) ** 2 = 64
+    """
+    __mapper_args__ = {"polymorphic_identity": "exponentiation"}
+
+    def get_result(self) -> float:
+        """
+        Calculate the result of raising the first value to the power of each
+        subsequent value, in sequence.
+
+        Takes the first number and repeatedly raises the running result to
+        the power of each remaining number.
+
+        Returns:
+            float: The result of the exponentiation sequence
+
+        Raises:
+            ValueError: If inputs are not a list or if fewer than 2 numbers provided
+        """
+        if not isinstance(self.inputs, list):
+            raise ValueError("Inputs must be a list of numbers.")
+        if len(self.inputs) < 2:
+            raise ValueError("Inputs must be a list with at least two numbers.")
+        result = self.inputs[0]
+        for power in self.inputs[1:]:
+            result = result ** power
+        return result
+
 class Division(Calculation):
     """
     Division calculation subclass.
