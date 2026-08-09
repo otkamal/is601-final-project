@@ -1,6 +1,6 @@
 # Calculations App
 
-A FastAPI web app for user auth (JWT) and performing/storing arithmetic calculations, with a full BREAD (Browse, Read, Edit, Add, Delete) API plus a server-rendered HTML frontend.
+A FastAPI web app for user auth (JWT) and performing/storing arithmetic calculations — addition, subtraction, multiplication, division, and exponentiation — with a full BREAD (Browse, Read, Edit, Add, Delete) API plus a server-rendered HTML frontend.
 
 Source & full docs: https://github.com/otkamal/is601-assignment14
 
@@ -14,7 +14,7 @@ docker run -d \
   -e DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/fastapi_db \
   -e JWT_SECRET_KEY=change-me \
   -e JWT_REFRESH_SECRET_KEY=change-me-too \
-  otkamal/mod14-assignment:latest
+  otkamal/is601-final-project:latest
 ```
 
 Then visit `http://localhost:8000` (API docs at `/docs`, health check at `/health`).
