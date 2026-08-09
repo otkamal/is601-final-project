@@ -81,8 +81,8 @@ jobs:
         with:
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/mod14-assignment:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/mod14-assignment:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/is601-final-project:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/is601-final-project:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/mod14-assignment:cache
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/is601-final-project:cache
           cache-to: type=inline,mode=max
