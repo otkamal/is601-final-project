@@ -2,7 +2,7 @@
 
 A FastAPI web app for user auth (JWT) and performing/storing arithmetic calculations — addition, subtraction, multiplication, division, and exponentiation — with a full BREAD (Browse, Read, Edit, Add, Delete) API plus a server-rendered HTML frontend.
 
-Source & full docs: https://github.com/otkamal/is601-assignment14
+Source & full docs: https://github.com/otkamal/is601-final-project
 
 ## Quick Start
 
