@@ -325,6 +325,13 @@ class Exponentiation(Calculation):
     Examples:
         [2, 3] -> 2 ** 3 = 8
         [2, 3, 2] -> (2 ** 3) ** 2 = 64
+
+    Special case handling:
+        - Raising zero to a negative power raises a ValueError (undefined,
+          would otherwise raise ZeroDivisionError)
+        - Raising a negative number to a fractional power raises a ValueError
+          (the mathematical result is complex, which can't be stored in the
+          Float result column)
     """
     __mapper_args__ = {"polymorphic_identity": "exponentiation"}
 
@@ -340,7 +347,10 @@ class Exponentiation(Calculation):
             float: The result of the exponentiation sequence
 
         Raises:
-            ValueError: If inputs are not a list or if fewer than 2 numbers provided
+            ValueError: If inputs are not a list, if fewer than 2 numbers
+                        provided, if zero would be raised to a negative
+                        power, or if a negative number would be raised to a
+                        fractional power (producing a complex result)
         """
         if not isinstance(self.inputs, list):
             raise ValueError("Inputs must be a list of numbers.")
@@ -348,7 +358,14 @@ class Exponentiation(Calculation):
             raise ValueError("Inputs must be a list with at least two numbers.")
         result = self.inputs[0]
         for power in self.inputs[1:]:
-            result = result ** power
+            if result == 0 and power < 0:
+                raise ValueError("Cannot raise zero to a negative power.")
+            new_result = result ** power
+            if isinstance(new_result, complex):
+                raise ValueError(
+                    "Cannot raise a negative number to a fractional power (result is complex)."
+                )
+            result = new_result
         return result
 
 class Division(Calculation):
