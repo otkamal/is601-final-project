@@ -22,6 +22,18 @@ def test_calculation_create_valid():
     assert calc.inputs == [10.5, 3.0]
     assert calc.user_id is not None
 
+def test_calculation_create_valid_exponentiation():
+    """Test creating a valid CalculationCreate schema with the exponentiation type."""
+    data = {
+        "type": "exponentiation",
+        "inputs": [2, 3],
+        "user_id": uuid4()
+    }
+    calc = CalculationCreate(**data)
+    assert calc.type == "exponentiation"
+    assert calc.inputs == [2.0, 3.0]
+    assert calc.user_id is not None
+
 def test_calculation_create_missing_type():
     """Test CalculationCreate fails if 'type' is missing."""
     data = {

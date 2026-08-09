@@ -8,6 +8,7 @@ from app.models.calculation import (
     Subtraction,
     Multiplication,
     Division,
+    Exponentiation
 )
 
 # Helper function to create a dummy user_id for testing.
@@ -41,6 +42,15 @@ def test_multiplication_get_result():
     multiplication = Multiplication(user_id=dummy_user_id(), inputs=inputs)
     result = multiplication.get_result()
     assert result == 24, f"Expected 24, got {result}"
+
+def test_exp_get_result():
+    """
+    Test that exponentiation.get_result returns the correct value
+    """
+    inputs = [2, 3, 4]
+    exp = Exponentiation(user_id=dummy_user_id(), inputs=inputs)
+    result = exp.get_result()
+    assert result == 4096, f"Expected 4096, got {result}"
 
 def test_division_get_result():
     """
@@ -102,6 +112,19 @@ def test_calculation_factory_multiplication():
     # Expected: 3 * 4 * 2 = 24
     assert isinstance(calc, Multiplication), "Factory did not return a Multiplication instance."
     assert calc.get_result() == 24, "Incorrect multiplication result."
+
+def test_calculation_factory_exponentiation():
+    """
+    Test the Calculation.create factory method for exponentiation
+    """
+    inputs = [2, 3, 4]
+    calc = Calculation.create(
+        calculation_type='exponentiation',
+        user_id=dummy_user_id(),
+        inputs=inputs,
+    )
+    assert isinstance(calc, Exponentiation), "Factory did not return an exponentiation instance."
+    assert calc.get_result() == 4096, "Incorrect exponentiation result"
 
 def test_calculation_factory_division():
     """
@@ -175,6 +198,49 @@ def test_invalid_inputs_too_few_for_multiplication():
     multiplication = Multiplication(user_id=dummy_user_id(), inputs=[10])
     with pytest.raises(ValueError, match="Inputs must be a list with at least two numbers."):
         multiplication.get_result()
+
+def test_invalid_inputs_for_exponentiation():
+    """
+    Test that providing non-list inputs for Exponentiation.get_result raises a ValueError.
+    """
+    exp = Exponentiation(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        exp.get_result()
+
+def test_invalid_inputs_too_few_for_exponentiation():
+    """
+    Test that providing fewer than two numbers to Multiplication.get_result raises a ValueError.
+    """
+    exp = Exponentiation(user_id=dummy_user_id(), inputs=[10])
+    with pytest.raises(ValueError, match="Inputs must be a list with at least two numbers."):
+        exp.get_result()
+
+def test_exponentiation_zero_to_negative_power():
+    """
+    Test that raising zero to a negative power raises a ValueError instead of
+    Python's ZeroDivisionError.
+    """
+    exp = Exponentiation(user_id=dummy_user_id(), inputs=[0, -1])
+    with pytest.raises(ValueError, match="Cannot raise zero to a negative power."):
+        exp.get_result()
+
+def test_exponentiation_negative_base_fractional_power():
+    """
+    Test that raising a negative number to a fractional power raises a
+    ValueError instead of silently producing a complex number.
+    """
+    exp = Exponentiation(user_id=dummy_user_id(), inputs=[-8, 0.5])
+    with pytest.raises(ValueError, match="Cannot raise a negative number to a fractional power"):
+        exp.get_result()
+
+def test_exponentiation_negative_exponent():
+    """
+    Test that a negative (non-fractional) exponent on a positive base still
+    produces the correct fractional result.
+    """
+    exp = Exponentiation(user_id=dummy_user_id(), inputs=[2, -2])
+    result = exp.get_result()
+    assert result == 0.25, f"Expected 0.25, got {result}"
 
 def test_invalid_inputs_for_division():
     """

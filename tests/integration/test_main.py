@@ -214,6 +214,26 @@ def test_create_calculation_success(authed_client):
     assert response.status_code == 201
     assert response.json()["result"] == 6
 
+def test_create_calculation_exponentiation_success(authed_client):
+    response = authed_client.post("/calculations", json={"type": "exponentiation", "inputs": [2, 3, 2]})
+    assert response.status_code == 201
+    # (2 ** 3) ** 2 = 64
+    assert response.json()["result"] == 64
+
+def test_create_calculation_exponentiation_zero_to_negative_power(authed_client):
+    """Test that the route surfaces the zero-to-a-negative-power guard as a
+    clean 400 (via get_result's ValueError) instead of a 500."""
+    response = authed_client.post("/calculations", json={"type": "exponentiation", "inputs": [0, -1]})
+    assert response.status_code == 400
+    assert "cannot raise zero to a negative power" in response.json()["detail"].lower()
+
+def test_create_calculation_exponentiation_negative_base_fractional_power(authed_client):
+    """Test that the route surfaces the complex-result guard as a clean 400
+    instead of a 500."""
+    response = authed_client.post("/calculations", json={"type": "exponentiation", "inputs": [-8, 0.5]})
+    assert response.status_code == 400
+    assert "complex" in response.json()["detail"].lower()
+
 def test_create_calculation_value_error_is_handled(authed_client):
     """Test the endpoint's own except ValueError branch.
 

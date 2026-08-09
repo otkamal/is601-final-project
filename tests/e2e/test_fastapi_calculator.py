@@ -231,6 +231,30 @@ def test_create_calculation_division(base_url: str):
     # Expected result: 100 / 2 / 5 = 10
     assert "result" in data and data["result"] == 10, f"Expected result 10, got {data.get('result')}"
 
+def test_create_calculation_exponentiation(base_url: str):
+    user_data = {
+        "first_name": "Calc",
+        "last_name": "Exponent",
+        "email": f"calc.exp{uuid4()}@example.com",
+        "username": f"calc_exp_{uuid4()}",
+        "password": "SecurePass123!",
+        "confirm_password": "SecurePass123!"
+    }
+    token_data = register_and_login(base_url, user_data)
+    access_token = token_data["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"{base_url}/calculations"
+    payload = {
+        "type": "exponentiation",
+        "inputs": [2, 3, 2],
+        "user_id": "ignored"
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    assert response.status_code == 201, f"Exponentiation calculation creation failed: {response.text}"
+    data = response.json()
+    # Expected result: (2 ** 3) ** 2 = 64
+    assert "result" in data and data["result"] == 64, f"Expected result 64, got {data.get('result')}"
+
 def test_list_get_update_delete_calculation(base_url: str):
     user_data = {
         "first_name": "Calc",
@@ -315,8 +339,19 @@ def test_model_division():
     calc = Calculation.create("division", dummy_user_id, [100, 2, 5])
     result = calc.get_result()
     assert result == 10, f"Division result incorrect: expected 10, got {result}"
-    
+
     # Test division by zero error
     with pytest.raises(ValueError):
         calc_zero = Calculation.create("division", dummy_user_id, [100, 0])
+        calc_zero.get_result()
+
+def test_model_exponentiation():
+    dummy_user_id = uuid4()
+    calc = Calculation.create("exponentiation", dummy_user_id, [2, 3, 2])
+    result = calc.get_result()
+    assert result == 64, f"Exponentiation result incorrect: expected 64, got {result}"
+
+    # Test zero raised to a negative power error
+    with pytest.raises(ValueError):
+        calc_zero = Calculation.create("exponentiation", dummy_user_id, [0, -1])
         calc_zero.get_result()
